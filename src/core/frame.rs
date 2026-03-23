@@ -18,7 +18,7 @@ impl Frame {
     }
 
     pub fn is_mjpeg(&self) -> bool {
-        matches!(self.format, crate::core::frame_format::FrameFormat::Mjpeg)
+        matches!(self.format, FrameFormat::Mjpeg)
     }
 
     pub fn save<P: AsRef<Path>>(&self, path: P) -> Result<(), std::io::Error> {
