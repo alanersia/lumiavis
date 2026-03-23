@@ -2,6 +2,9 @@ use std::path::Path;
 
 use crate::core::frame_format::FrameFormat;
 use crate::core::resolution::Resolution;
+use crate::error::CamError;
+use crate::image::decoder::decode_frame;
+use crate::image::image::Image;
 
 #[derive(Debug, Clone)]
 pub struct Frame {
@@ -23,5 +26,9 @@ impl Frame {
 
     pub fn save<P: AsRef<Path>>(&self, path: P) -> Result<(), std::io::Error> {
         std::fs::write(path, &self.data)
+    }
+
+    pub fn decode(&self) -> Result<Image, CamError> {
+        decode_frame(self)
     }
 }
