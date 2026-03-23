@@ -6,6 +6,7 @@ pub mod image;
 
 pub use crate::capture::camera::Camera;
 pub use crate::capture::config::CameraConfig;
+pub use crate::capture::session::{CaptureSession, CaptureStats};
 pub use crate::core::camera_mode::CameraMode;
 pub use crate::core::camera_state::CameraState;
 pub use crate::core::frame::Frame;
