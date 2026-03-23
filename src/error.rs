@@ -8,6 +8,7 @@ pub enum CamError {
     FrameReadFailed(String),
     UnsupportedFormat,
     InvalidConfig(String),
+    ConfigApplyFailed(String),
     BackendError(String),
 }
 
@@ -20,6 +21,7 @@ impl Display for CamError {
             Self::FrameReadFailed(msg) => write!(f, "failed to read frame: {msg}"),
             Self::UnsupportedFormat => write!(f, "unsupported frame format"),
             Self::InvalidConfig(msg) => write!(f, "invalid camera config: {msg}"),
+            Self::ConfigApplyFailed(msg) => write!(f, "failed to apply camera config: {msg}"),
             Self::BackendError(msg) => write!(f, "backend error: {msg}"),
         }
     }

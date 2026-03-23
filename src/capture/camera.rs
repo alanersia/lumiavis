@@ -1,5 +1,6 @@
 use crate::backends::v4l2::V4l2Camera;
 use crate::capture::config::CameraConfig;
+use crate::core::camera_state::CameraState;
 use crate::core::frame::Frame;
 use crate::error::CamError;
 
@@ -15,5 +16,9 @@ impl Camera {
 
     pub fn read_frame(&mut self) -> Result<Frame, CamError> {
         self.inner.read_frame()
+    }
+
+    pub fn state(&self) -> CameraState {
+        self.inner.state()
     }
 }
