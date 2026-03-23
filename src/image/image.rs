@@ -29,4 +29,19 @@ impl Image {
             color,
         )
     }
+
+    pub fn resize(
+        &self,
+        new_size: crate::core::resolution::Resolution,
+    ) -> Result<Self, crate::CamError> {
+        crate::image::ops::resize::resize(self, new_size)
+    }
+
+    pub fn crop(&self, rect: crate::image::ops::crop::CropRect) -> Result<Self, crate::CamError> {
+        crate::image::ops::crop::crop(self, rect)
+    }
+
+    pub fn grayscale(&self) -> Result<Self, crate::CamError> {
+        crate::image::ops::grayscale::grayscale(self)
+    }
 }

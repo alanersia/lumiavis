@@ -90,18 +90,38 @@ impl V4l2Camera {
     }
 
     pub fn read_frame(&mut self) -> Result<Frame, CamError> {
-        let (data, meta) = self
-            .stream
-            .next()
-            .map_err(|e| CamError::FrameReadFailed(e.to_string()))?;
+        const MAX_ATTEMPTS: usize = 8;
 
-        Ok(Frame {
-            resolution: self.state.resolution,
-            format: self.state.format,
-            data: data.to_vec(),
-            bytes_used: data.len(),
-            sequence: meta.sequence as u64,
-        })
+        for _ in 0..MAX_ATTEMPTS {
+            let (data, meta) = self
+                .stream
+                .next()
+                .map_err(|e| CamError::FrameReadFailed(e.to_string()))?;
+
+            let used = meta.bytesused as usize;
+
+            if used == 0 || used > data.len() {
+                continue;
+            }
+
+            let frame_data = &data[..used];
+
+            if matches!(self.state.format, FrameFormat::Mjpeg) && !is_valid_jpeg(frame_data) {
+                continue;
+            }
+
+            return Ok(Frame {
+                resolution: self.state.resolution,
+                format: self.state.format,
+                data: frame_data.to_vec(),
+                bytes_used: used,
+                sequence: meta.sequence as u64,
+            });
+        }
+
+        Err(CamError::BackendError(
+            "failed to read a valid frame after multiple attempts".to_string(),
+        ))
     }
 
     pub fn state(&self) -> CameraState {
@@ -184,4 +204,15 @@ fn map_frame_format(format: FrameFormat) -> FourCC {
         FrameFormat::Gray8 => FourCC::new(b"GREY"),
         FrameFormat::Unknown => FourCC::new(b"MJPG"),
     }
+}
+
+fn is_valid_jpeg(data: &[u8]) -> bool {
+    if data.len() < 4 {
+        return false;
+    }
+
+    let starts_ok = data[0] == 0xFF && data[1] == 0xD8;
+    let ends_ok = data[data.len() - 2] == 0xFF && data[data.len() - 1] == 0xD9;
+
+    starts_ok && ends_ok
 }

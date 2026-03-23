@@ -14,4 +14,7 @@ pub use crate::core::resolution::Resolution;
 pub use crate::error::CamError;
 pub use crate::image::decoder::decode_frame;
 pub use crate::image::image::Image;
+pub use crate::image::ops::crop::CropRect;
+pub use crate::image::ops::grayscale::grayscale;
+pub use crate::image::ops::resize::resize;
 pub use crate::image::pixel_format::PixelFormat;
