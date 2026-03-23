@@ -1,6 +1,6 @@
+use crate::core::image::model::Image;
+use crate::core::image::pixel_format::PixelFormat;
 use crate::LumiavisError;
-use crate::image::image::Image;
-use crate::image::pixel_format::PixelFormat;
 
 pub fn grayscale(image: &Image) -> Result<Image, LumiavisError> {
     match image.pixel_format {

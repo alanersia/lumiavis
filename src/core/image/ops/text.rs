@@ -1,7 +1,7 @@
+use crate::core::image::model::Image;
+use crate::core::image::ops::draw::RgbColor;
+use crate::core::image::pixel_format::PixelFormat;
 use crate::LumiavisError;
-use crate::image::image::Image;
-use crate::image::ops::draw::RgbColor;
-use crate::image::pixel_format::PixelFormat;
 
 const CHAR_WIDTH: u32 = 5;
 const CHAR_HEIGHT: u32 = 7;

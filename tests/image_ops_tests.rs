@@ -1,4 +1,4 @@
-use lumiavis::image::ops::crop::CropRect;
+use lumiavis::core::image::ops::crop::CropRect;
 use lumiavis::{Annotation, DrawRect, Image, LumiavisError, PixelFormat, Resolution, RgbColor};
 
 fn make_rgb_image(width: u32, height: u32, data: Vec<u8>) -> Image {

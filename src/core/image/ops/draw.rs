@@ -1,6 +1,6 @@
+use crate::core::image::model::Image;
+use crate::core::image::pixel_format::PixelFormat;
 use crate::LumiavisError;
-use crate::image::image::Image;
-use crate::image::pixel_format::PixelFormat;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct DrawRect {

@@ -1,30 +1,25 @@
 pub mod backends;
-pub mod capture;
 pub mod core;
 pub mod error;
-pub mod image;
-pub mod render;
-pub mod video;
-pub mod vision;
+pub mod prelude;
 
-pub use crate::capture::camera::Camera;
-pub use crate::capture::config::CameraConfig;
-pub use crate::capture::session::{CaptureSession, CaptureStats};
-pub use crate::core::camera_mode::CameraMode;
-pub use crate::core::camera_state::CameraState;
-pub use crate::core::frame::Frame;
-pub use crate::core::frame_format::FrameFormat;
-pub use crate::core::resolution::Resolution;
-pub use crate::error::LumiavisError;
-pub use crate::image::decoder::decode_frame;
-pub use crate::image::image::Image;
-pub use crate::image::ops::crop::CropRect;
-pub use crate::image::ops::draw::{DrawRect, RgbColor};
-pub use crate::image::ops::grayscale::grayscale;
-pub use crate::image::ops::resize::resize;
-pub use crate::image::pixel_format::PixelFormat;
-pub use crate::render::display::image_to_u32_buffer;
-pub use crate::video::export::{Mp4ExportOptions, export_jpeg_sequence_to_mp4};
-pub use crate::vision::annotation::{
-    Annotation, draw_annotations, draw_fps_overlay, draw_label_box,
+pub use error::LumiavisError;
+
+pub use core::camera_mode::CameraMode;
+pub use core::camera_state::CameraState;
+pub use core::capture::camera::Camera;
+pub use core::capture::config::CameraConfig;
+pub use core::capture::session::{CaptureSession, CaptureStats};
+pub use core::frame::Frame;
+pub use core::frame_format::FrameFormat;
+pub use core::image::decoder::decode_frame;
+pub use core::image::model::Image;
+pub use core::image::ops::crop::CropRect;
+pub use core::image::ops::draw::{DrawRect, RgbColor};
+pub use core::image::pixel_format::PixelFormat;
+pub use core::render::display::image_to_u32_buffer;
+pub use core::resolution::Resolution;
+pub use core::video::export::{export_jpeg_sequence_to_mp4, Mp4ExportOptions};
+pub use core::vision::annotation::{
+    draw_annotations, draw_fps_overlay, draw_label_box, Annotation,
 };

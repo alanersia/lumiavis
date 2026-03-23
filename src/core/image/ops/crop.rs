@@ -1,6 +1,6 @@
-use crate::LumiavisError;
+use crate::core::image::model::Image;
 use crate::core::resolution::Resolution;
-use crate::image::image::Image;
+use crate::LumiavisError;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct CropRect {

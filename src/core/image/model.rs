@@ -1,5 +1,5 @@
+use crate::core::image::pixel_format::PixelFormat;
 use crate::core::resolution::Resolution;
-use crate::image::pixel_format::PixelFormat;
 use std::path::Path;
 
 #[derive(Debug, Clone)]
@@ -42,27 +42,27 @@ impl Image {
         &self,
         new_size: crate::core::resolution::Resolution,
     ) -> Result<Self, crate::LumiavisError> {
-        crate::image::ops::resize::resize(self, new_size)
+        crate::core::image::ops::resize::resize(self, new_size)
     }
 
     pub fn crop(
         &self,
-        rect: crate::image::ops::crop::CropRect,
+        rect: crate::core::image::ops::crop::CropRect,
     ) -> Result<Self, crate::LumiavisError> {
-        crate::image::ops::crop::crop(self, rect)
+        crate::core::image::ops::crop::crop(self, rect)
     }
 
     pub fn grayscale(&self) -> Result<Self, crate::LumiavisError> {
-        crate::image::ops::grayscale::grayscale(self)
+        crate::core::image::ops::grayscale::grayscale(self)
     }
 
     pub fn draw_rect(
         &mut self,
-        rect: crate::image::ops::draw::DrawRect,
-        color: crate::image::ops::draw::RgbColor,
+        rect: crate::core::image::ops::draw::DrawRect,
+        color: crate::core::image::ops::draw::RgbColor,
         thickness: u32,
     ) -> Result<(), crate::LumiavisError> {
-        crate::image::ops::draw::draw_rect(self, rect, color, thickness)
+        crate::core::image::ops::draw::draw_rect(self, rect, color, thickness)
     }
 
     pub fn draw_text(
@@ -70,21 +70,21 @@ impl Image {
         x: u32,
         y: u32,
         text: &str,
-        color: crate::image::ops::draw::RgbColor,
+        color: crate::core::image::ops::draw::RgbColor,
     ) -> Result<(), crate::LumiavisError> {
-        crate::image::ops::text::draw_text(self, x, y, text, color)
+        crate::core::image::ops::text::draw_text(self, x, y, text, color)
     }
 
     pub fn fill_rect(
         &mut self,
-        rect: crate::DrawRect,
-        color: crate::RgbColor,
+        rect: crate::core::image::ops::draw::DrawRect,
+        color: crate::core::image::ops::draw::RgbColor,
     ) -> Result<(), crate::LumiavisError> {
-        crate::image::ops::draw::fill_rect(self, rect, color)
+        crate::core::image::ops::draw::fill_rect(self, rect, color)
     }
 
     pub fn draw_annotation(&mut self, ann: &crate::Annotation) -> Result<(), crate::LumiavisError> {
-        crate::draw_label_box(self, ann)
+        crate::core::vision::annotation::draw_label_box(self, ann)
     }
 
     pub fn draw_annotations(

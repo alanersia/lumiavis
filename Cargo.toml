@@ -1,7 +1,15 @@
 [package]
 name = "lumiavis"
 version = "0.1.0"
-edition = "2024"
+edition = "2021"
+description = "Lightweight Rust library for camera capture, image processing, preview, and simple video pipelines"
+license = "MIT"
+readme = "README.md"
+repository = "https://github.com/alanersia/lumiavis"
+homepage = "https://github.com/alanersia/lumiavis"
+documentation = "https://docs.rs/lumiavis"
+keywords = ["camera", "vision", "image", "video", "v4l2"]
+categories = ["multimedia::images", "multimedia::video", "computer-vision"]
 
 [dependencies]
 image = "0.25.10"

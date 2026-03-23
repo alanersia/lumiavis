@@ -1,6 +1,6 @@
 use lumiavis::{
-    Annotation, Camera, CameraConfig, DrawRect, FrameFormat, Resolution, RgbColor,
-    image_to_u32_buffer,
+    image_to_u32_buffer, Annotation, Camera, CameraConfig, DrawRect, FrameFormat, Resolution,
+    RgbColor,
 };
 use minifb::{Key, Window, WindowOptions};
 

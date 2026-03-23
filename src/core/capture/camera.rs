@@ -1,7 +1,7 @@
 use crate::backends::v4l2::V4l2Camera;
-use crate::capture::config::CameraConfig;
 use crate::core::camera_mode::CameraMode;
 use crate::core::camera_state::CameraState;
+use crate::core::capture::config::CameraConfig;
 use crate::core::frame::Frame;
 use crate::error::LumiavisError;
 

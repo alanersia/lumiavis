@@ -1,4 +1,4 @@
-use lumiavis::{Camera, CameraConfig, FrameFormat, Resolution, RgbColor, image_to_u32_buffer};
+use lumiavis::{image_to_u32_buffer, Camera, CameraConfig, FrameFormat, Resolution, RgbColor};
 use minifb::{Key, Window, WindowOptions};
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
