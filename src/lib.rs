@@ -3,6 +3,7 @@ pub mod capture;
 pub mod core;
 pub mod error;
 pub mod image;
+pub mod video;
 
 pub use crate::capture::camera::Camera;
 pub use crate::capture::config::CameraConfig;
@@ -19,3 +20,4 @@ pub use crate::image::ops::crop::CropRect;
 pub use crate::image::ops::grayscale::grayscale;
 pub use crate::image::ops::resize::resize;
 pub use crate::image::pixel_format::PixelFormat;
+pub use crate::video::export::{Mp4ExportOptions, export_jpeg_sequence_to_mp4};

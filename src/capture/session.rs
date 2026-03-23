@@ -3,6 +3,8 @@ use std::fs;
 use std::path::Path;
 use std::time::Instant;
 
+use crate::video::export::{Mp4ExportOptions, export_jpeg_sequence_to_mp4};
+
 #[derive(Debug, Clone)]
 pub struct CaptureStats {
     pub frames_captured: usize,
@@ -64,5 +66,20 @@ impl CaptureSession {
             elapsed_seconds: elapsed,
             effective_fps,
         })
+    }
+
+    pub fn capture_to_jpeg_sequence_and_export_mp4<
+        P: AsRef<std::path::Path>,
+        Q: AsRef<std::path::Path>,
+    >(
+        &mut self,
+        output_dir: P,
+        total_frames: usize,
+        output_mp4: Q,
+        options: &Mp4ExportOptions,
+    ) -> Result<CaptureStats, CamError> {
+        let stats = self.capture_to_jpeg_sequence(&output_dir, total_frames)?;
+        export_jpeg_sequence_to_mp4(output_dir, output_mp4, options)?;
+        Ok(stats)
     }
 }
