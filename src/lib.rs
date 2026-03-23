@@ -5,6 +5,7 @@ pub mod error;
 pub mod image;
 pub mod render;
 pub mod video;
+pub mod vision;
 
 pub use crate::capture::camera::Camera;
 pub use crate::capture::config::CameraConfig;
@@ -24,3 +25,6 @@ pub use crate::image::ops::resize::resize;
 pub use crate::image::pixel_format::PixelFormat;
 pub use crate::render::display::image_to_u32_buffer;
 pub use crate::video::export::{Mp4ExportOptions, export_jpeg_sequence_to_mp4};
+pub use crate::vision::annotation::{
+    Annotation, draw_annotations, draw_fps_overlay, draw_label_box,
+};

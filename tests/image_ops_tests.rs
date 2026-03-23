@@ -1,5 +1,5 @@
 use lumiavis::image::ops::crop::CropRect;
-use lumiavis::{DrawRect, Image, LumiavisError, PixelFormat, Resolution, RgbColor};
+use lumiavis::{Annotation, DrawRect, Image, LumiavisError, PixelFormat, Resolution, RgbColor};
 
 fn make_rgb_image(width: u32, height: u32, data: Vec<u8>) -> Image {
     Image {
@@ -95,4 +95,76 @@ fn crop_out_of_bounds_returns_error() {
     let result = image.crop(CropRect::new(3, 3, 2, 2));
 
     assert!(result.is_err());
+}
+
+#[test]
+fn draw_text_modifies_image() -> Result<(), LumiavisError> {
+    let mut image = Image::new(
+        Resolution::new(32, 16),
+        PixelFormat::Rgb8,
+        vec![0u8; 32 * 16 * 3],
+    );
+
+    image.draw_text(0, 0, "A", RgbColor::WHITE)?;
+
+    assert!(image.data.iter().any(|&v| v != 0));
+
+    Ok(())
+}
+
+#[test]
+fn draw_annotation_modifies_image() -> Result<(), LumiavisError> {
+    let mut image = Image::new(
+        Resolution::new(64, 32),
+        PixelFormat::Rgb8,
+        vec![0u8; 64 * 32 * 3],
+    );
+
+    let ann = Annotation::new(
+        DrawRect::new(10, 10, 20, 10),
+        "TEST",
+        Some(0.99),
+        RgbColor::GREEN,
+    );
+
+    image.draw_annotation(&ann)?;
+
+    assert!(image.data.iter().any(|&v| v != 0));
+
+    Ok(())
+}
+
+#[test]
+fn fill_rect_modifies_image() -> Result<(), LumiavisError> {
+    let mut image = Image::new(
+        Resolution::new(16, 16),
+        PixelFormat::Rgb8,
+        vec![0u8; 16 * 16 * 3],
+    );
+
+    image.fill_rect(DrawRect::new(2, 2, 4, 4), RgbColor::GREEN)?;
+
+    assert!(image.data.iter().any(|&v| v != 0));
+    Ok(())
+}
+
+#[test]
+fn draw_annotations_modifies_image() -> Result<(), LumiavisError> {
+    let mut image = Image::new(
+        Resolution::new(64, 32),
+        PixelFormat::Rgb8,
+        vec![0u8; 64 * 32 * 3],
+    );
+
+    let anns = vec![Annotation::new(
+        DrawRect::new(10, 10, 20, 10),
+        "TEST",
+        Some(0.99),
+        RgbColor::GREEN,
+    )];
+
+    image.draw_annotations(&anns)?;
+
+    assert!(image.data.iter().any(|&v| v != 0));
+    Ok(())
 }

@@ -10,6 +10,14 @@ pub struct Image {
 }
 
 impl Image {
+    pub fn new(resolution: Resolution, pixel_format: PixelFormat, data: Vec<u8>) -> Self {
+        Self {
+            resolution,
+            pixel_format,
+            data,
+        }
+    }
+
     pub fn as_bytes(&self) -> &[u8] {
         &self.data
     }
@@ -37,7 +45,10 @@ impl Image {
         crate::image::ops::resize::resize(self, new_size)
     }
 
-    pub fn crop(&self, rect: crate::image::ops::crop::CropRect) -> Result<Self, crate::LumiavisError> {
+    pub fn crop(
+        &self,
+        rect: crate::image::ops::crop::CropRect,
+    ) -> Result<Self, crate::LumiavisError> {
         crate::image::ops::crop::crop(self, rect)
     }
 
@@ -52,5 +63,45 @@ impl Image {
         thickness: u32,
     ) -> Result<(), crate::LumiavisError> {
         crate::image::ops::draw::draw_rect(self, rect, color, thickness)
+    }
+
+    pub fn draw_text(
+        &mut self,
+        x: u32,
+        y: u32,
+        text: &str,
+        color: crate::image::ops::draw::RgbColor,
+    ) -> Result<(), crate::LumiavisError> {
+        crate::image::ops::text::draw_text(self, x, y, text, color)
+    }
+
+    pub fn fill_rect(
+        &mut self,
+        rect: crate::DrawRect,
+        color: crate::RgbColor,
+    ) -> Result<(), crate::LumiavisError> {
+        crate::image::ops::draw::fill_rect(self, rect, color)
+    }
+
+    pub fn draw_annotation(&mut self, ann: &crate::Annotation) -> Result<(), crate::LumiavisError> {
+        crate::draw_label_box(self, ann)
+    }
+
+    pub fn draw_annotations(
+        &mut self,
+        annotations: &[crate::Annotation],
+    ) -> Result<(), crate::LumiavisError> {
+        crate::draw_annotations(self, annotations)
+    }
+
+    pub fn draw_fps_overlay(
+        &mut self,
+        fps: f64,
+        x: u32,
+        y: u32,
+        text_color: crate::RgbColor,
+        background: Option<crate::RgbColor>,
+    ) -> Result<(), crate::LumiavisError> {
+        crate::draw_fps_overlay(self, fps, x, y, text_color, background)
     }
 }
