@@ -1,4 +1,4 @@
-use crate::CamError;
+use crate::LumiavisError;
 use crate::core::resolution::Resolution;
 use crate::image::image::Image;
 
@@ -21,9 +21,9 @@ impl CropRect {
     }
 }
 
-pub fn crop(image: &Image, rect: CropRect) -> Result<Image, CamError> {
+pub fn crop(image: &Image, rect: CropRect) -> Result<Image, LumiavisError> {
     if rect.width == 0 || rect.height == 0 {
-        return Err(CamError::InvalidConfig(
+        return Err(LumiavisError::InvalidConfig(
             "crop width/height must be > 0".to_string(),
         ));
     }
@@ -31,7 +31,7 @@ pub fn crop(image: &Image, rect: CropRect) -> Result<Image, CamError> {
     if rect.x + rect.width > image.resolution.width
         || rect.y + rect.height > image.resolution.height
     {
-        return Err(CamError::InvalidConfig(
+        return Err(LumiavisError::InvalidConfig(
             "crop rect is out of bounds".to_string(),
         ));
     }

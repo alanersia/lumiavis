@@ -2,7 +2,7 @@ use std::path::Path;
 
 use crate::core::frame_format::FrameFormat;
 use crate::core::resolution::Resolution;
-use crate::error::CamError;
+use crate::error::LumiavisError;
 use crate::image::decoder::decode_frame;
 use crate::image::image::Image;
 
@@ -28,7 +28,7 @@ impl Frame {
         std::fs::write(path, &self.data)
     }
 
-    pub fn decode(&self) -> Result<Image, CamError> {
+    pub fn decode(&self) -> Result<Image, LumiavisError> {
         decode_frame(self)
     }
 }

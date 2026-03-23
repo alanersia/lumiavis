@@ -33,15 +33,24 @@ impl Image {
     pub fn resize(
         &self,
         new_size: crate::core::resolution::Resolution,
-    ) -> Result<Self, crate::CamError> {
+    ) -> Result<Self, crate::LumiavisError> {
         crate::image::ops::resize::resize(self, new_size)
     }
 
-    pub fn crop(&self, rect: crate::image::ops::crop::CropRect) -> Result<Self, crate::CamError> {
+    pub fn crop(&self, rect: crate::image::ops::crop::CropRect) -> Result<Self, crate::LumiavisError> {
         crate::image::ops::crop::crop(self, rect)
     }
 
-    pub fn grayscale(&self) -> Result<Self, crate::CamError> {
+    pub fn grayscale(&self) -> Result<Self, crate::LumiavisError> {
         crate::image::ops::grayscale::grayscale(self)
+    }
+
+    pub fn draw_rect(
+        &mut self,
+        rect: crate::image::ops::draw::DrawRect,
+        color: crate::image::ops::draw::RgbColor,
+        thickness: u32,
+    ) -> Result<(), crate::LumiavisError> {
+        crate::image::ops::draw::draw_rect(self, rect, color, thickness)
     }
 }
