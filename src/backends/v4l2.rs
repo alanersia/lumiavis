@@ -1,4 +1,5 @@
 use crate::capture::config::CameraConfig;
+use crate::core::camera_mode::CameraMode;
 use crate::core::camera_state::CameraState;
 use crate::core::frame::Frame;
 use crate::core::frame_format::FrameFormat;
@@ -11,7 +12,6 @@ use v4l::fraction::Fraction;
 use v4l::io::mmap::Stream as MmapStream;
 use v4l::io::traits::CaptureStream;
 use v4l::video::Capture;
-use v4l::video::capture::Parameters as CaptureParameters;
 use v4l::{Device, FourCC};
 
 pub struct V4l2Camera {
@@ -20,6 +20,46 @@ pub struct V4l2Camera {
 }
 
 impl V4l2Camera {
+    pub fn list_modes(index: usize) -> Result<Vec<CameraMode>, CamError> {
+        let dev = Device::new(index).map_err(|e| CamError::DeviceOpenFailed(e.to_string()))?;
+
+        let mut modes = Vec::new();
+
+        let formats = dev
+            .enum_formats()
+            .map_err(|e| CamError::BackendError(e.to_string()))?;
+
+        for fmt_desc in formats {
+            let frame_format = map_fourcc(fmt_desc.fourcc);
+            let fourcc = fmt_desc.fourcc.str().unwrap_or("UNKNOWN").to_string();
+
+            let sizes = dev
+                .enum_framesizes(fmt_desc.fourcc)
+                .map_err(|e| CamError::BackendError(e.to_string()))?;
+
+            for size in sizes {
+                match size.size {
+                    v4l::framesize::FrameSizeEnum::Discrete(discrete) => {
+                        modes.push(CameraMode {
+                            format: frame_format,
+                            fourcc: fourcc.clone(),
+                            resolution: Resolution::new(discrete.width, discrete.height),
+                        });
+                    }
+                    v4l::framesize::FrameSizeEnum::Stepwise(stepwise) => {
+                        modes.push(CameraMode {
+                            format: frame_format,
+                            fourcc: fourcc.clone(),
+                            resolution: Resolution::new(stepwise.max_width, stepwise.max_height),
+                        });
+                    }
+                }
+            }
+        }
+
+        Ok(modes)
+    }
+
     pub fn open(config: CameraConfig) -> Result<Self, CamError> {
         validate_config(&config)?;
 
@@ -122,10 +162,14 @@ fn read_actual_fps(dev: &Device) -> Result<u32, CamError> {
     Ok(denominator / numerator)
 }
 
-fn map_fourcc(fourcc: FourCC) -> FrameFormat {
+fn map_fourcc(fourcc: v4l::FourCC) -> FrameFormat {
     match fourcc.str().unwrap_or("UNKNOWN") {
         "MJPG" => FrameFormat::Mjpeg,
         "YUYV" => FrameFormat::Yuyv,
+        "H264" => FrameFormat::H264,
+        "NV12" => FrameFormat::Nv12,
+        "RGB3" => FrameFormat::Rgb8,
+        "GREY" => FrameFormat::Gray8,
         _ => FrameFormat::Unknown,
     }
 }
@@ -134,6 +178,10 @@ fn map_frame_format(format: FrameFormat) -> FourCC {
     match format {
         FrameFormat::Mjpeg => FourCC::new(b"MJPG"),
         FrameFormat::Yuyv => FourCC::new(b"YUYV"),
+        FrameFormat::H264 => FourCC::new(b"H264"),
+        FrameFormat::Nv12 => FourCC::new(b"NV12"),
+        FrameFormat::Rgb8 => FourCC::new(b"RGB3"),
+        FrameFormat::Gray8 => FourCC::new(b"GREY"),
         FrameFormat::Unknown => FourCC::new(b"MJPG"),
     }
 }
