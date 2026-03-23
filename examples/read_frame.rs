@@ -12,6 +12,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("{:?}", frame.format);
     println!("{}x{}", frame.resolution.width, frame.resolution.height);
     println!("bytes={}", frame.bytes_used);
+    println!(
+        "first bytes: {:02X?}",
+        &frame.data[..16.min(frame.data.len())]
+    );
 
     Ok(())
 }

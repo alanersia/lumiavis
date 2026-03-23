@@ -1,3 +1,5 @@
+use std::path::Path;
+
 use crate::core::frame_format::FrameFormat;
 use crate::core::resolution::Resolution;
 
@@ -8,4 +10,18 @@ pub struct Frame {
     pub data: Vec<u8>,
     pub bytes_used: usize,
     pub sequence: u64,
+}
+
+impl Frame {
+    pub fn as_bytes(&self) -> &[u8] {
+        &self.data
+    }
+
+    pub fn is_mjpeg(&self) -> bool {
+        matches!(self.format, crate::core::frame_format::FrameFormat::Mjpeg)
+    }
+
+    pub fn save<P: AsRef<Path>>(&self, path: P) -> Result<(), std::io::Error> {
+        std::fs::write(path, &self.data)
+    }
 }
