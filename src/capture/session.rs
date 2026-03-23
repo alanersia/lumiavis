@@ -1,4 +1,4 @@
-use crate::{CamError, Camera, Frame};
+use crate::{LumiavisError, Camera, Frame};
 use std::fs;
 use std::path::Path;
 use std::time::Instant;
@@ -29,7 +29,7 @@ impl CaptureSession {
         &mut self.camera
     }
 
-    pub fn read_frame(&mut self) -> Result<Frame, CamError> {
+    pub fn read_frame(&mut self) -> Result<Frame, LumiavisError> {
         self.camera.read_frame()
     }
 
@@ -37,11 +37,11 @@ impl CaptureSession {
         &mut self,
         output_dir: P,
         total_frames: usize,
-    ) -> Result<CaptureStats, CamError> {
+    ) -> Result<CaptureStats, LumiavisError> {
         let output_dir = output_dir.as_ref();
 
         fs::create_dir_all(output_dir)
-            .map_err(|e| CamError::BackendError(format!("failed to create output dir: {e}")))?;
+            .map_err(|e| LumiavisError::BackendError(format!("failed to create output dir: {e}")))?;
 
         let start = Instant::now();
 
@@ -51,7 +51,7 @@ impl CaptureSession {
             let filename = output_dir.join(format!("frame_{:05}.jpg", i));
             frame
                 .save(&filename)
-                .map_err(|e| CamError::BackendError(format!("failed to save frame: {e}")))?;
+                .map_err(|e| LumiavisError::BackendError(format!("failed to save frame: {e}")))?;
         }
 
         let elapsed = start.elapsed().as_secs_f64();
@@ -77,7 +77,7 @@ impl CaptureSession {
         total_frames: usize,
         output_mp4: Q,
         options: &Mp4ExportOptions,
-    ) -> Result<CaptureStats, CamError> {
+    ) -> Result<CaptureStats, LumiavisError> {
         let stats = self.capture_to_jpeg_sequence(&output_dir, total_frames)?;
         export_jpeg_sequence_to_mp4(output_dir, output_mp4, options)?;
         Ok(stats)

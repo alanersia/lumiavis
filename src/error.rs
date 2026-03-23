@@ -1,7 +1,7 @@
 use std::fmt::{Display, Formatter};
 
 #[derive(Debug)]
-pub enum CamError {
+pub enum LumiavisError {
     DeviceNotFound,
     DeviceOpenFailed(String),
     StreamStartFailed(String),
@@ -12,7 +12,7 @@ pub enum CamError {
     BackendError(String),
 }
 
-impl Display for CamError {
+impl Display for LumiavisError {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match self {
             Self::DeviceNotFound => write!(f, "camera device not found"),
@@ -27,4 +27,4 @@ impl Display for CamError {
     }
 }
 
-impl std::error::Error for CamError {}
+impl std::error::Error for LumiavisError {}

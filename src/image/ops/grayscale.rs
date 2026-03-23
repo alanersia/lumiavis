@@ -1,8 +1,8 @@
-use crate::CamError;
+use crate::LumiavisError;
 use crate::image::image::Image;
 use crate::image::pixel_format::PixelFormat;
 
-pub fn grayscale(image: &Image) -> Result<Image, CamError> {
+pub fn grayscale(image: &Image) -> Result<Image, LumiavisError> {
     match image.pixel_format {
         PixelFormat::Gray8 => Ok(image.clone()),
 

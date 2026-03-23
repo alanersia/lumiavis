@@ -1,4 +1,4 @@
-use crate::CamError;
+use crate::LumiavisError;
 use std::path::Path;
 use std::process::Command;
 
@@ -25,7 +25,7 @@ pub fn export_jpeg_sequence_to_mp4<P: AsRef<Path>, Q: AsRef<Path>>(
     input_dir: P,
     output_file: Q,
     options: &Mp4ExportOptions,
-) -> Result<(), CamError> {
+) -> Result<(), LumiavisError> {
     let input_dir = input_dir.as_ref();
     let output_file = output_file.as_ref();
 
@@ -45,7 +45,7 @@ pub fn export_jpeg_sequence_to_mp4<P: AsRef<Path>, Q: AsRef<Path>>(
         "-i",
         input_pattern
             .to_str()
-            .ok_or_else(|| CamError::BackendError("invalid input pattern path".to_string()))?,
+            .ok_or_else(|| LumiavisError::BackendError("invalid input pattern path".to_string()))?,
         "-c:v",
         "libx264",
         "-preset",
@@ -59,16 +59,16 @@ pub fn export_jpeg_sequence_to_mp4<P: AsRef<Path>, Q: AsRef<Path>>(
     cmd.arg(
         output_file
             .to_str()
-            .ok_or_else(|| CamError::BackendError("invalid output file path".to_string()))?,
+            .ok_or_else(|| LumiavisError::BackendError("invalid output file path".to_string()))?,
     );
 
     let output = cmd
         .output()
-        .map_err(|e| CamError::BackendError(format!("failed to run ffmpeg: {e}")))?;
+        .map_err(|e| LumiavisError::BackendError(format!("failed to run ffmpeg: {e}")))?;
 
     if !output.status.success() {
         let stderr = String::from_utf8_lossy(&output.stderr);
-        return Err(CamError::BackendError(format!(
+        return Err(LumiavisError::BackendError(format!(
             "ffmpeg failed: {}",
             stderr.trim()
         )));
