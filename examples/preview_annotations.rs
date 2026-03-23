@@ -1,5 +1,6 @@
 use lumiavis::{
-    image_to_u32_buffer, Camera, CameraConfig, DrawRect, FrameFormat, Resolution, RgbColor,
+    image_to_u32_buffer, Annotation, Camera, CameraConfig, DrawRect, FrameFormat, Resolution,
+    RgbColor,
 };
 use minifb::{Key, Window, WindowOptions};
 
@@ -16,7 +17,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let height = state.resolution.height as usize;
 
     let mut window = Window::new(
-        "Lumiavis Preview - Draw Rect",
+        "Lumiavis Preview - Annotations",
         width,
         height,
         WindowOptions::default(),
@@ -24,11 +25,28 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let mut display_buffer = vec![0u32; width * height];
 
+    let annotations = vec![
+        Annotation::new(
+            DrawRect::new(100, 80, 200, 120),
+            "PERSON",
+            Some(0.92),
+            RgbColor::GREEN,
+        ),
+        Annotation::new(
+            DrawRect::new(340, 120, 120, 90),
+            "CAR",
+            Some(0.87),
+            RgbColor::RED,
+        ),
+    ];
+
     while window.is_open() && !window.is_key_down(Key::Escape) {
         let frame = camera.read_frame()?;
         let mut image = frame.decode()?;
 
-        image.draw_rect(DrawRect::new(100, 80, 200, 120), RgbColor::GREEN, 3)?;
+        for ann in &annotations {
+            image.draw_annotation(ann)?;
+        }
 
         image_to_u32_buffer(&image, &mut display_buffer);
         window.update_with_buffer(&display_buffer, width, height)?;

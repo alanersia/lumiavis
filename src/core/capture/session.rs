@@ -1,9 +1,9 @@
-use crate::{LumiavisError, Camera, Frame};
+use crate::{Camera, Frame, LumiavisError};
 use std::fs;
 use std::path::Path;
 use std::time::Instant;
 
-use crate::video::export::{Mp4ExportOptions, export_jpeg_sequence_to_mp4};
+use crate::core::video::export::{export_jpeg_sequence_to_mp4, Mp4ExportOptions};
 
 #[derive(Debug, Clone)]
 pub struct CaptureStats {
@@ -40,8 +40,9 @@ impl CaptureSession {
     ) -> Result<CaptureStats, LumiavisError> {
         let output_dir = output_dir.as_ref();
 
-        fs::create_dir_all(output_dir)
-            .map_err(|e| LumiavisError::BackendError(format!("failed to create output dir: {e}")))?;
+        fs::create_dir_all(output_dir).map_err(|e| {
+            LumiavisError::BackendError(format!("failed to create output dir: {e}"))
+        })?;
 
         let start = Instant::now();
 

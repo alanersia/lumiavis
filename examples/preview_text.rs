@@ -1,4 +1,4 @@
-use lumiavis::{image_to_u32_buffer, Camera, CameraConfig, FrameFormat, Resolution};
+use lumiavis::{image_to_u32_buffer, Camera, CameraConfig, FrameFormat, Resolution, RgbColor};
 use minifb::{Key, Window, WindowOptions};
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -8,13 +8,13 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         .with_format(FrameFormat::Mjpeg);
 
     let mut camera = Camera::open(config)?;
+    let state = camera.state();
 
-    let output_size = Resolution::new(320, 180);
-    let width = output_size.width as usize;
-    let height = output_size.height as usize;
+    let width = state.resolution.width as usize;
+    let height = state.resolution.height as usize;
 
     let mut window = Window::new(
-        "Lumiavis Preview - Resize",
+        "Lumiavis Preview - Text",
         width,
         height,
         WindowOptions::default(),
@@ -24,10 +24,12 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     while window.is_open() && !window.is_key_down(Key::Escape) {
         let frame = camera.read_frame()?;
-        let image = frame.decode()?;
-        let processed = image.resize(output_size)?;
+        let mut image = frame.decode()?;
 
-        image_to_u32_buffer(&processed, &mut display_buffer);
+        image.draw_text(16, 16, "FPS: 18.7", RgbColor::GREEN)?;
+        image.draw_text(16, 32, "PERSON 0.92", RgbColor::RED)?;
+
+        image_to_u32_buffer(&image, &mut display_buffer);
         window.update_with_buffer(&display_buffer, width, height)?;
     }
 

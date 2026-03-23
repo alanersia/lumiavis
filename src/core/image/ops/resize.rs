@@ -1,7 +1,7 @@
-use crate::LumiavisError;
+use crate::core::image::model::Image;
+use crate::core::image::pixel_format::PixelFormat;
 use crate::core::resolution::Resolution;
-use crate::image::image::Image;
-use crate::image::pixel_format::PixelFormat;
+use crate::LumiavisError;
 
 pub fn resize(image: &Image, new_size: Resolution) -> Result<Image, LumiavisError> {
     if new_size.width == 0 || new_size.height == 0 {

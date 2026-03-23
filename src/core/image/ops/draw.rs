@@ -1,6 +1,6 @@
+use crate::core::image::model::Image;
+use crate::core::image::pixel_format::PixelFormat;
 use crate::LumiavisError;
-use crate::image::image::Image;
-use crate::image::pixel_format::PixelFormat;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct DrawRect {
@@ -61,6 +61,41 @@ pub fn draw_rect(
         PixelFormat::Rgb8 => draw_rect_rgb(image, rect, color, thickness),
         PixelFormat::Gray8 | PixelFormat::Rgba8 => Err(LumiavisError::UnsupportedFormat),
     }
+}
+
+pub fn fill_rect(image: &mut Image, rect: DrawRect, color: RgbColor) -> Result<(), LumiavisError> {
+    if rect.width == 0 || rect.height == 0 {
+        return Err(LumiavisError::InvalidConfig(
+            "fill rect width/height must be > 0".to_string(),
+        ));
+    }
+
+    match image.pixel_format {
+        PixelFormat::Rgb8 => fill_rect_rgb(image, rect, color),
+        PixelFormat::Gray8 | PixelFormat::Rgba8 => Err(LumiavisError::UnsupportedFormat),
+    }
+}
+
+fn fill_rect_rgb(image: &mut Image, rect: DrawRect, color: RgbColor) -> Result<(), LumiavisError> {
+    let img_w = image.resolution.width;
+    let img_h = image.resolution.height;
+
+    if rect.x >= img_w || rect.y >= img_h {
+        return Err(LumiavisError::InvalidConfig(
+            "fill rect origin out of bounds".to_string(),
+        ));
+    }
+
+    let x2 = rect.x.saturating_add(rect.width).min(img_w);
+    let y2 = rect.y.saturating_add(rect.height).min(img_h);
+
+    for y in rect.y..y2 {
+        for x in rect.x..x2 {
+            set_rgb_pixel(image, x, y, color);
+        }
+    }
+
+    Ok(())
 }
 
 fn draw_rect_rgb(

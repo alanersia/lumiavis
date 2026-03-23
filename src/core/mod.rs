@@ -1,5 +1,10 @@
 pub mod camera_mode;
 pub mod camera_state;
+pub mod capture;
 pub mod frame;
 pub mod frame_format;
+pub mod image;
+pub mod render;
 pub mod resolution;
+pub mod video;
+pub mod vision;

@@ -1,6 +1,6 @@
-use crate::capture::config::CameraConfig;
 use crate::core::camera_mode::CameraMode;
 use crate::core::camera_state::CameraState;
+use crate::core::capture::config::CameraConfig;
 use crate::core::frame::Frame;
 use crate::core::frame_format::FrameFormat;
 use crate::core::resolution::Resolution;

@@ -1,8 +1,8 @@
 use crate::core::frame::Frame;
 use crate::core::frame_format::FrameFormat;
+use crate::core::image::model::Image;
+use crate::core::image::pixel_format::PixelFormat;
 use crate::error::LumiavisError;
-use crate::image::image::Image;
-use crate::image::pixel_format::PixelFormat;
 
 pub fn decode_frame(frame: &Frame) -> Result<Image, LumiavisError> {
     match frame.format {

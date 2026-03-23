@@ -1,10 +1,10 @@
 use std::path::Path;
 
 use crate::core::frame_format::FrameFormat;
+use crate::core::image::decoder::decode_frame;
+use crate::core::image::model::Image;
 use crate::core::resolution::Resolution;
 use crate::error::LumiavisError;
-use crate::image::decoder::decode_frame;
-use crate::image::image::Image;
 
 #[derive(Debug, Clone)]
 pub struct Frame {
