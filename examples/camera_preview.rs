@@ -22,7 +22,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         height,
         WindowOptions::default(),
     )?;
-    window.limit_update_rate(None); // Let the camera drive the loop, prevent minifb 60fps limit alias
+    window.set_target_fps(0);
     let mut display_buffer = vec![0u32; width * height];
 
     let mut fps_timer = Instant::now();

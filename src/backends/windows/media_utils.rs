@@ -70,10 +70,9 @@ pub unsafe fn configure_format(
     let stream = MF_SOURCE_READER_FIRST_VIDEO_STREAM.0 as u32;
 
     struct NativeCandidate {
-        subtype: windows::core::GUID,
+        media_type: IMFMediaType,
         width: u32,
         height: u32,
-        fps: u32,
         native_fmt: NativePixelFormat,
         priority: u32, // lower = better
     }
@@ -140,10 +139,9 @@ pub unsafe fn configure_format(
         let better = best.as_ref().map_or(true, |b| priority < b.priority);
         if better {
             best = Some(NativeCandidate {
-                subtype,
+                media_type: mt.clone(),
                 width,
                 height,
-                fps,
                 native_fmt,
                 priority,
             });
@@ -161,31 +159,19 @@ pub unsafe fn configure_format(
 
     // For MJPEG: request native MJPEG output directly
     if best.native_fmt == NativePixelFormat::Mjpeg {
-        if set_output_type(
-            reader,
-            &MFVideoFormat_MJPG,
-            best.width,
-            best.height,
-            best.fps,
-        ) {
+        if set_native_output_type(reader, &best.media_type) {
             return Ok((FrameFormat::Mjpeg, res, NativePixelFormat::Mjpeg));
         }
     }
 
     // For YUV formats: try requesting RGB24 output first
     // (MF_SOURCE_READER_ENABLE_VIDEO_PROCESSING allows WMF to auto-insert a converter)
-    if set_output_type(
-        reader,
-        &MFVideoFormat_RGB24,
-        best.width,
-        best.height,
-        best.fps,
-    ) {
+    if set_converted_output_type(reader, &best.media_type, &MFVideoFormat_RGB24) {
         return Ok((FrameFormat::Rgb8, res, NativePixelFormat::Rgb24));
     }
 
     // Fallback: set the native YUV output and do software conversion in read_frame
-    if set_output_type(reader, &best.subtype, best.width, best.height, best.fps) {
+    if set_native_output_type(reader, &best.media_type) {
         return Ok((FrameFormat::Rgb8, res, best.native_fmt));
     }
 
@@ -194,30 +180,35 @@ pub unsafe fn configure_format(
     ))
 }
 
-/// Set the source reader's output type to the given subtype + frame size.
-/// Uses a fresh IMFMediaType each call to avoid 0xC00D5212.
-pub unsafe fn set_output_type(
+/// Set the source reader to the camera's native media type exactly as exposed by the driver.
+pub unsafe fn set_native_output_type(reader: &IMFSourceReader, media_type: &IMFMediaType) -> bool {
+    reader
+        .SetCurrentMediaType(
+            MF_SOURCE_READER_FIRST_VIDEO_STREAM.0 as u32,
+            None,
+            media_type,
+        )
+        .is_ok()
+}
+
+/// Request a converted output type by cloning the camera's native media type and only
+/// changing the subtype. Keeping the rest of the attributes from the driver tends to be
+/// much more reliable than constructing a sparse output type from scratch.
+pub unsafe fn set_converted_output_type(
     reader: &IMFSourceReader,
+    native_media_type: &IMFMediaType,
     subtype: &windows::core::GUID,
-    width: u32,
-    height: u32,
-    fps: u32,
 ) -> bool {
     let Ok(mt) = MFCreateMediaType() else {
         return false;
     };
+    if native_media_type.CopyAllItems(&mt).is_err() {
+        return false;
+    }
     if mt.SetGUID(&MF_MT_MAJOR_TYPE, &MFMediaType_Video).is_err() {
         return false;
     }
     if mt.SetGUID(&MF_MT_SUBTYPE, subtype).is_err() {
-        return false;
-    }
-    let size_packed: u64 = ((width as u64) << 32) | (height as u64);
-    if mt.SetUINT64(&MF_MT_FRAME_SIZE, size_packed).is_err() {
-        return false;
-    }
-    let fps_packed: u64 = ((fps as u64) << 32) | 1u64;
-    if mt.SetUINT64(&MF_MT_FRAME_RATE, fps_packed).is_err() {
         return false;
     }
     reader
