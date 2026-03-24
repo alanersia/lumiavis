@@ -3,6 +3,7 @@ use std::path::Path;
 use crate::core::frame_format::FrameFormat;
 use crate::core::image::decoder::decode_frame;
 use crate::core::image::model::Image;
+use crate::core::image::pixel_format::PixelFormat;
 use crate::core::resolution::Resolution;
 use crate::error::LumiavisError;
 
@@ -30,5 +31,22 @@ impl Frame {
 
     pub fn decode(&self) -> Result<Image, LumiavisError> {
         decode_frame(self)
+    }
+
+    pub fn to_image(&self) -> Result<Image, LumiavisError> {
+        match self.format {
+            FrameFormat::Mjpeg => {
+                // reuse existing decoder
+                self.decode()
+            }
+
+            FrameFormat::Rgb8 => Ok(Image {
+                resolution: self.resolution.clone(),
+                pixel_format: PixelFormat::Rgb8,
+                data: self.data.clone(),
+            }),
+
+            _ => Err(LumiavisError::UnsupportedFormat),
+        }
     }
 }

@@ -1,20 +1,9 @@
-use lumiavis::{Camera, CameraConfig, FrameFormat, Resolution};
+use lumiavis::{image_to_u32_buffer, Camera, CameraConfig, FrameFormat, Resolution};
 use minifb::{Key, Window, WindowOptions};
 use std::time::Instant;
 
-fn fill_rgb_to_u32_buffer(src: &[u8], dst: &mut [u32]) {
-    assert_eq!(src.len() / 3, dst.len());
-
-    for (i, chunk) in src.chunks_exact(3).enumerate() {
-        let r = chunk[0] as u32;
-        let g = chunk[1] as u32;
-        let b = chunk[2] as u32;
-        dst[i] = (r << 16) | (g << 8) | b;
-    }
-}
-
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let config = CameraConfig::new(0)
+    let config = CameraConfig::new(1)
         .with_resolution(Resolution::new(640, 360))
         .with_fps(30)
         .with_format(FrameFormat::Mjpeg);
@@ -22,6 +11,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut camera = Camera::open(config)?;
 
     let state = camera.state();
+    println!("Camera state: {:?}", state);
+
     let width = state.resolution.width as usize;
     let height = state.resolution.height as usize;
 
@@ -38,24 +29,37 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut render_total = 0.0;
 
     while window.is_open() && !window.is_key_down(Key::Escape) {
+        // ================= READ =================
         let t0 = Instant::now();
         let frame = camera.read_frame()?;
         read_total += t0.elapsed().as_secs_f64();
 
+        // ================= DECODE (SAFE) =================
         let t1 = Instant::now();
-        let image = frame.decode()?;
+
+        let image = match frame.to_image() {
+            Ok(img) => img,
+            Err(e) => {
+                eprintln!("failed to process frame: {:?}", e);
+                continue;
+            }
+        };
+
         decode_total += t1.elapsed().as_secs_f64();
 
+        // ================= CONVERT =================
         let t2 = Instant::now();
-        fill_rgb_to_u32_buffer(&image.data, &mut display_buffer);
+        image_to_u32_buffer(&image, &mut display_buffer);
         convert_total += t2.elapsed().as_secs_f64();
 
+        // ================= RENDER =================
         let t3 = Instant::now();
         window.update_with_buffer(&display_buffer, width, height)?;
         render_total += t3.elapsed().as_secs_f64();
 
         frame_count += 1;
 
+        // ================= FPS =================
         let elapsed = fps_timer.elapsed().as_secs_f64();
         if elapsed >= 1.0 {
             let fps = frame_count as f64 / elapsed;
