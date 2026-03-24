@@ -10,11 +10,19 @@ pub enum LumiavisError {
     InvalidConfig(String),
     ConfigApplyFailed(String),
     BackendError(String),
+    UnsupportedPlatform,
+}
+
+impl From<windows::core::Error> for LumiavisError {
+    fn from(e: windows::core::Error) -> Self {
+        LumiavisError::BackendError(format!("{:?}", e))
+    }
 }
 
 impl Display for LumiavisError {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match self {
+            Self::UnsupportedPlatform => write!(f, "unsupported platform"),
             Self::DeviceNotFound => write!(f, "camera device not found"),
             Self::DeviceOpenFailed(msg) => write!(f, "failed to open device: {msg}"),
             Self::StreamStartFailed(msg) => write!(f, "failed to start stream: {msg}"),

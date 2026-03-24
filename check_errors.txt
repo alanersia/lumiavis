@@ -1,0 +1,39 @@
+﻿cargo :     Checking 
+lumiavis v0.1.0 (C:\Use
+rs\alan\Documents\exper
+iments\lumiavis)
+At line:1 char:1
++ cargo check 
+--message-format=short 
+2>&1 | Out-String | 
+Set-Content "C ...
++ ~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~
+    + CategoryInfo     
+         : NotSpecifi  
+  ed: (    Checking    
+ lu...ments\lumiavi    
+s):String) [], Rem    
+oteException
+    + FullyQualifiedEr 
+   rorId : NativeComm  
+  andError
+ 
+src\backends\windows_mf
+.rs:1:5: warning: 
+unused import: `windows
+::core::Interface`
+src\backends\windows_mf
+.rs:9:46: warning: 
+unused import: `resolut
+ion::Resolution`
+warning: `lumiavis` 
+(lib) generated 2 
+warnings (run `cargo 
+fix --lib -p lumiavis` 
+to apply 2 suggestions)
+    Finished `dev` 
+profile [unoptimized + 
+debuginfo] target(s) 
+in 0.40s
+

@@ -1,29 +1,81 @@
-use crate::backends::v4l2::V4l2Camera;
-use crate::core::camera_mode::CameraMode;
-use crate::core::camera_state::CameraState;
-use crate::core::capture::config::CameraConfig;
-use crate::core::frame::Frame;
+use crate::backends::traits::CameraBackend;
+use crate::core::{
+    camera_mode::CameraMode, camera_state::CameraState, capture::config::CameraConfig, frame::Frame,
+};
 use crate::error::LumiavisError;
 
+#[cfg(target_os = "linux")]
+use crate::backends::linux::V4l2CameraBackend;
+
+#[cfg(target_os = "windows")]
+use crate::backends::windows::windows_mf::MediaFoundationCameraBackend;
+
 pub struct Camera {
-    inner: V4l2Camera,
+    inner: CameraInner,
+}
+
+enum CameraInner {
+    #[cfg(target_os = "linux")]
+    V4l2(V4l2CameraBackend),
+
+    #[cfg(target_os = "windows")]
+    Mf(MediaFoundationCameraBackend),
 }
 
 impl Camera {
-    pub fn list_modes(index: usize) -> Result<Vec<CameraMode>, LumiavisError> {
-        V4l2Camera::list_modes(index)
-    }
-
     pub fn open(config: CameraConfig) -> Result<Self, LumiavisError> {
-        let inner = V4l2Camera::open(config)?;
-        Ok(Self { inner })
+        #[cfg(target_os = "linux")]
+        {
+            let backend = V4l2CameraBackend::open(config)?;
+            return Ok(Self {
+                inner: CameraInner::V4l2(backend),
+            });
+        }
+
+        #[cfg(target_os = "windows")]
+        {
+            let backend = MediaFoundationCameraBackend::open(config)?;
+            return Ok(Self {
+                inner: CameraInner::Mf(backend),
+            });
+        }
+
+        #[allow(unreachable_code)]
+        Err(LumiavisError::UnsupportedPlatform)
     }
 
     pub fn read_frame(&mut self) -> Result<Frame, LumiavisError> {
-        self.inner.read_frame()
+        match &mut self.inner {
+            #[cfg(target_os = "linux")]
+            CameraInner::V4l2(b) => b.read_frame(),
+
+            #[cfg(target_os = "windows")]
+            CameraInner::Mf(b) => b.read_frame(),
+        }
     }
 
     pub fn state(&self) -> CameraState {
-        self.inner.state()
+        match &self.inner {
+            #[cfg(target_os = "linux")]
+            CameraInner::V4l2(b) => b.state(),
+
+            #[cfg(target_os = "windows")]
+            CameraInner::Mf(b) => b.state(),
+        }
+    }
+
+    pub fn list_modes(index: usize) -> Result<Vec<CameraMode>, LumiavisError> {
+        #[cfg(target_os = "linux")]
+        {
+            return V4l2CameraBackend::list_modes(index);
+        }
+
+        #[cfg(target_os = "windows")]
+        {
+            return MediaFoundationCameraBackend::list_modes(index);
+        }
+
+        #[allow(unreachable_code)]
+        Err(LumiavisError::UnsupportedPlatform)
     }
 }
