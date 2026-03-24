@@ -18,6 +18,29 @@ impl Image {
         }
     }
 
+    /// Loads an image from the filesystem and converts it to a standard Lumiavis Image
+    /// (Rgb8, Rgba8, or Gray8)
+    pub fn load<P: AsRef<Path>>(path: P) -> Result<Self, crate::LumiavisError> {
+        let img = image::open(path).map_err(|e| crate::LumiavisError::BackendError(e.to_string()))?;
+
+        let res = Resolution::new(img.width(), img.height());
+
+        let (pixel_format, data) = match img {
+            image::DynamicImage::ImageLuma8(luma) => (PixelFormat::Gray8, luma.into_raw()),
+            image::DynamicImage::ImageRgba8(rgba) => (PixelFormat::Rgba8, rgba.into_raw()),
+            _ => {
+                let rgb = img.to_rgb8();
+                (PixelFormat::Rgb8, rgb.into_raw())
+            }
+        };
+
+        Ok(Self {
+            resolution: res,
+            pixel_format,
+            data,
+        })
+    }
+
     pub fn as_bytes(&self) -> &[u8] {
         &self.data
     }
