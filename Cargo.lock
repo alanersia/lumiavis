@@ -739,8 +739,10 @@ version = "0.2.0"
 dependencies = [
  "image",
  "minifb",
+ "rayon",
  "v4l",
  "windows",
+ "zune-jpeg",
 ]
 
 [[package]]

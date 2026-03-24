@@ -14,6 +14,8 @@ categories = ["multimedia::images", "multimedia::video", "computer-vision"]
 [dependencies]
 image = "0.25.10"
 minifb = "0.28.0"
+zune-jpeg = "0.5.14"
+rayon = "1.10.0"
 
 [target.'cfg(target_os = "windows")'.dependencies]
 windows = { version = "0.58", features = [

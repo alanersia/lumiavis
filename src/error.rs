@@ -13,6 +13,7 @@ pub enum LumiavisError {
     UnsupportedPlatform,
 }
 
+#[cfg(target_os = "windows")]
 impl From<windows::core::Error> for LumiavisError {
     fn from(e: windows::core::Error) -> Self {
         LumiavisError::BackendError(format!("{:?}", e))

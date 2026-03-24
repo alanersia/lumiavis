@@ -1,10 +1,10 @@
-use lumiavis::{image_to_u32_buffer, Camera, CameraConfig};
+use lumiavis::{Camera, CameraConfig, image_to_u32_buffer};
 use minifb::{Key, Window, WindowOptions};
 use std::time::Instant;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     // 1. Configure the camera for the highest possible resolution and frame rate
-    let config = CameraConfig::best_quality(1);
+    let config = CameraConfig::best_quality(0);
 
     // 2. Open the camera
     let mut camera = Camera::open(config)?;
@@ -16,7 +16,13 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let height = state.resolution.height as usize;
 
     // 3. Create a Minifb window for display
-    let mut window = Window::new("Lumiavis - Camera Preview", width, height, WindowOptions::default())?;
+    let mut window = Window::new(
+        "Lumiavis - Camera Preview",
+        width,
+        height,
+        WindowOptions::default(),
+    )?;
+    window.limit_update_rate(None); // Let the camera drive the loop, prevent minifb 60fps limit alias
     let mut display_buffer = vec![0u32; width * height];
 
     let mut fps_timer = Instant::now();

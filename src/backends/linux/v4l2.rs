@@ -1,3 +1,4 @@
+use crate::backends::traits::CameraBackend;
 use crate::core::camera_mode::CameraMode;
 use crate::core::camera_state::CameraState;
 use crate::core::capture::config::CameraConfig;
@@ -14,13 +15,13 @@ use v4l::io::traits::CaptureStream;
 use v4l::video::Capture;
 use v4l::{Device, FourCC};
 
-pub struct V4l2Camera {
+pub struct V4l2CameraBackend {
     stream: MmapStream<'static>,
     state: CameraState,
 }
 
-impl V4l2Camera {
-    pub fn list_modes(index: usize) -> Result<Vec<CameraMode>, LumiavisError> {
+impl CameraBackend for V4l2CameraBackend {
+    fn list_modes(index: usize) -> Result<Vec<CameraMode>, LumiavisError> {
         let dev = Device::new(index).map_err(|e| LumiavisError::DeviceOpenFailed(e.to_string()))?;
 
         let mut modes = Vec::new();
@@ -60,20 +61,60 @@ impl V4l2Camera {
         Ok(modes)
     }
 
-    pub fn open(config: CameraConfig) -> Result<Self, LumiavisError> {
-        validate_config(&config)?;
+    fn open(config: CameraConfig) -> Result<Self, LumiavisError> {
+        let mut actual_config = config.clone();
 
-        let mut dev = Device::new(config.index)
+        if actual_config.resolution.width == 0
+            || actual_config.resolution.height == 0
+            || actual_config.fps == 0
+        {
+            if let Ok(modes) = Self::list_modes(actual_config.index) {
+                let mut best_mode = None;
+                let mut max_score = 0;
+
+                for mode in modes {
+                    let res_score = mode.resolution.width as u32 * mode.resolution.height as u32;
+
+                    let format_multiplier = match mode.format {
+                        FrameFormat::Mjpeg => 4,
+                        FrameFormat::Nv12 => 3,
+                        FrameFormat::Yuyv => 2,
+                        FrameFormat::Rgb8 => 1,
+                        _ => 0,
+                    };
+
+                    let score = res_score * format_multiplier;
+                    if score > max_score {
+                        max_score = score;
+                        best_mode = Some(mode);
+                    }
+                }
+
+                if let Some(mode) = best_mode {
+                    if actual_config.resolution.width == 0 || actual_config.resolution.height == 0 {
+                        actual_config.resolution = mode.resolution;
+                        actual_config.format = mode.format;
+                    }
+                }
+            }
+            if actual_config.fps == 0 {
+                actual_config.fps = 1000;
+            }
+        }
+
+        validate_config(&actual_config)?;
+
+        let mut dev = Device::new(actual_config.index)
             .map_err(|e| LumiavisError::DeviceOpenFailed(e.to_string()))?;
 
-        apply_format(&mut dev, &config)?;
-        apply_fps(&dev, config.fps)?;
+        apply_format(&mut dev, &actual_config)?;
+        apply_fps(&dev, actual_config.fps)?;
 
         let actual_format = dev
             .format()
             .map_err(|e| LumiavisError::BackendError(e.to_string()))?;
 
-        let actual_fps = read_actual_fps(&dev).unwrap_or(config.fps);
+        let actual_fps = read_actual_fps(&dev).unwrap_or(actual_config.fps);
 
         let state = CameraState {
             resolution: Resolution::new(actual_format.width, actual_format.height),
@@ -89,7 +130,7 @@ impl V4l2Camera {
         Ok(Self { stream, state })
     }
 
-    pub fn read_frame(&mut self) -> Result<Frame, LumiavisError> {
+    fn read_frame(&mut self) -> Result<Frame, LumiavisError> {
         const MAX_ATTEMPTS: usize = 8;
 
         for _ in 0..MAX_ATTEMPTS {
@@ -124,7 +165,7 @@ impl V4l2Camera {
         ))
     }
 
-    pub fn state(&self) -> CameraState {
+    fn state(&self) -> CameraState {
         self.state
     }
 }
@@ -211,8 +252,8 @@ fn is_valid_jpeg(data: &[u8]) -> bool {
         return false;
     }
 
-    let starts_ok = data[0] == 0xFF && data[1] == 0xD8;
-    let ends_ok = data[data.len() - 2] == 0xFF && data[data.len() - 1] == 0xD9;
-
-    starts_ok && ends_ok
+    // Some V4L2 camera drivers pad MJPEG frames with zeros.
+    // It is safer to just check for SOI (Start of Image),
+    // since the decoder will stop when it hits EOI anyway.
+    data[0] == 0xFF && data[1] == 0xD8
 }

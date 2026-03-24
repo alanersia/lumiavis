@@ -1,4 +1,5 @@
 use crate::{Image, PixelFormat};
+use rayon::prelude::*;
 
 pub fn image_to_u32_buffer(image: &Image, dst: &mut [u32]) {
     match image.pixel_format {
@@ -9,26 +10,32 @@ pub fn image_to_u32_buffer(image: &Image, dst: &mut [u32]) {
 }
 
 fn fill_rgb(image: &Image, dst: &mut [u32]) {
-    for (i, chunk) in image.data.chunks_exact(3).enumerate() {
-        let r = chunk[0] as u32;
-        let g = chunk[1] as u32;
-        let b = chunk[2] as u32;
-        dst[i] = (r << 16) | (g << 8) | b;
-    }
+    dst.par_iter_mut()
+        .zip(image.data.par_chunks_exact(3))
+        .for_each(|(d, chunk)| {
+            let r = chunk[0] as u32;
+            let g = chunk[1] as u32;
+            let b = chunk[2] as u32;
+            *d = (r << 16) | (g << 8) | b;
+        });
 }
 
 fn fill_gray(image: &Image, dst: &mut [u32]) {
-    for (i, &v) in image.data.iter().enumerate() {
-        let x = v as u32;
-        dst[i] = (x << 16) | (x << 8) | x;
-    }
+    dst.par_iter_mut()
+        .zip(image.data.par_iter())
+        .for_each(|(d, &v)| {
+            let x = v as u32;
+            *d = (x << 16) | (x << 8) | x;
+        });
 }
 
 fn fill_rgba(image: &Image, dst: &mut [u32]) {
-    for (i, chunk) in image.data.chunks_exact(4).enumerate() {
-        let r = chunk[0] as u32;
-        let g = chunk[1] as u32;
-        let b = chunk[2] as u32;
-        dst[i] = (r << 16) | (g << 8) | b;
-    }
+    dst.par_iter_mut()
+        .zip(image.data.par_chunks_exact(4))
+        .for_each(|(d, chunk)| {
+            let r = chunk[0] as u32;
+            let g = chunk[1] as u32;
+            let b = chunk[2] as u32;
+            *d = (r << 16) | (g << 8) | b;
+        });
 }

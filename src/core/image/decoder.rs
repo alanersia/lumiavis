@@ -12,15 +12,16 @@ pub fn decode_frame(frame: &Frame) -> Result<Image, LumiavisError> {
 }
 
 fn decode_mjpeg(frame: &Frame) -> Result<Image, LumiavisError> {
-    let dyn_img = image::load_from_memory(&frame.data)
+    let mut decoder = zune_jpeg::JpegDecoder::new(std::io::Cursor::new(&frame.data[..]));
+    let pixels = decoder.decode()
         .map_err(|e| LumiavisError::BackendError(format!("jpeg decode failed: {e}")))?;
 
-    let rgb = dyn_img.to_rgb8();
-    let (width, height) = rgb.dimensions();
+    let info = decoder.info()
+        .ok_or_else(|| LumiavisError::BackendError("failed to get jpeg info".to_string()))?;
 
     Ok(Image {
-        resolution: crate::core::resolution::Resolution::new(width, height),
+        resolution: crate::core::resolution::Resolution::new(info.width as u32, info.height as u32),
         pixel_format: PixelFormat::Rgb8,
-        data: rgb.into_raw(),
+        data: pixels,
     })
 }
