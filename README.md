@@ -1,111 +1,100 @@
-# Lumiavis
-
-Lumiavis is a lightweight Rust library for camera capture, image processing, and simple video pipelines.
-
-It provides a minimal, clean abstraction over:
-- webcam capture (V4L2)
-- image decoding (MJPEG → RGB)
-- image operations (resize, crop, grayscale, draw)
-- preview rendering
-- video export (JPEG sequence → MP4 via ffmpeg)
+<div align="center">
+  <h1>📸 Lumiavis</h1>
+  <p><strong>A lightweight, elegant Rust library for cross-platform camera capture and image processing.</strong></p>
+  <p>
+    <a href="#"><img alt="License" src="https://img.shields.io/badge/license-Apache%202.0-blue.svg" /></a>
+    <a href="#"><img alt="Rust Version" src="https://img.shields.io/badge/rust-1.70%2B-orange.svg" /></a>
+    <a href="examples/"><img alt="Examples" src="https://img.shields.io/badge/examples-4%20Showcases-brightgreen" /></a>
+  </p>
+</div>
 
 ---
+
+Lumiavis provides a minimal and clean abstraction over **V4L2** (Linux) and **Media Foundation** (Windows) to capture high-quality webcam frames. Beyond simple capture, it includes a robust image processing pipeline to load, manipulate, and export images and video sequences effortlessly.
 
 ## ✨ Features
 
-- 📷 Camera capture (V4L2)
-- 🖼️ Image decoding (MJPEG → RGB)
-- 🧩 Image ops:
-  - resize
-  - crop
-  - grayscale
-  - draw rectangle
-- 🖥️ Preview window (via examples)
-- 🎞️ Capture to JPEG sequence
-- 🎬 Export MP4 using ffmpeg
+- **🎥 Cross-Platform Capture:** Automatically negotiates the best resolution and framerate without messy boilerplate.
+- **🖼️ Image Processing:** Easily load images from disk, resize, crop, and apply grayscale filters.
+- **🖌️ Annotations:** Draw geometric shapes, text, bounding boxes, and real-time FPS overlays.
+- **🎞️ Video Export:** Capture a sequence of JPEGs and compile them into an MP4 video using our FFmpeg bridge.
 
 ---
 
-## 🚀 Quick Example
+## 🚀 Quick Start
 
-### Capture and Save One Frame
+### 1. Camera Capture
+
+Lumiavis makes it incredibly simple to find your camera, negotiate the maximum quality, and capture a photo:
 
 ```rust
-use lumiavis::{Camera, CameraConfig, FrameFormat, Resolution};
+use lumiavis::{Camera, CameraConfig};
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let config = CameraConfig::new(0)
-        .with_resolution(Resolution::new(1280, 720))
-        .with_fps(30)
-        .with_format(FrameFormat::Mjpeg);
-
+    // Automatically configures the camera for its highest resolution and FPS
+    let config = CameraConfig::best_quality(0);
+    
+    // Open the camera and read a frame
     let mut camera = Camera::open(config)?;
     let frame = camera.read_frame()?;
+    
+    // Decode and save to disk
+    frame.to_image()?.save("webcam_photo.jpg")?;
+    
+    Ok(())
+}
+```
 
-    frame.save("frame.jpg")?;
+### 2. Image Processing
 
+No webcam? No problem. Lumiavis can also serve as a standalone image manipulation tool:
+
+```rust
+use lumiavis::{Image, Resolution, RgbColor};
+use lumiavis::core::image::ops::crop::CropRect;
+
+fn main() -> Result<(), Box<dyn std::error::Error>> {
+    // Load an image directly from disk
+    let mut image = Image::load("input.jpg")?;
+
+    // Perform a series of operations cleanly
+    let processed = image
+        .resize(Resolution::new(800, 600))?
+        .crop(CropRect { x: 200, y: 150, width: 400, height: 300 })?
+        .grayscale()?;
+
+    processed.save("output_processed.jpg")?;
+    
     Ok(())
 }
 ```
 
 ---
 
-### Capture Video (JPEG Sequence)
+## 📚 Documentation
 
-```rust
-use lumiavis::{Camera, CameraConfig, CaptureSession, FrameFormat, Resolution};
+Dive deeper into Lumiavis by reading our dedicated tutorials:
 
-let config = CameraConfig::new(0)
-    .with_resolution(Resolution::new(1280, 720))
-    .with_fps(30)
-    .with_format(FrameFormat::Mjpeg);
-
-let camera = Camera::open(config)?;
-let mut session = CaptureSession::new(camera);
-
-let stats = session.capture_to_jpeg_sequence("video_frames", 120)?;
-
-println!("fps: {:.2}", stats.effective_fps);
-```
+- [**Camera Capture Guide**](docs/camera_capture.md): Learn about device enumeration, hardware acceleration, and frame reading.
+- [**Image Processing Guide**](docs/image_processing.md): Learn how the internal NV12/YUY2 to RGB conversions work, and how to apply annotations.
+- [**Video Export Guide**](docs/video_export.md): Learn how to use `CaptureSession` to record JPEG sequences and export them to MP4.
 
 ---
 
-### Export to MP4
+## 💡 Examples
 
-Requires ffmpeg:
+We provide heavily-commented, practical examples to get you started quickly. Run them using cargo:
 
 ```bash
-sudo apt install ffmpeg
+cargo run --release --example camera_preview
+cargo run --release --example save_image
+cargo run --release --example image_processing
+cargo run --release --example list_cameras
 ```
-
-```rust
-use lumiavis::{export_jpeg_sequence_to_mp4, Mp4ExportOptions};
-
-let options = Mp4ExportOptions::default();
-
-export_jpeg_sequence_to_mp4(
-    "video_frames",
-    "output.mp4",
-    &options,
-)?;
-```
-
----
-
-## 📦 Architecture
-
-Camera → Frame → decode → Image → ops → render/export
-
----
-
-## ⚠️ Notes
-
-- MJPEG decoding is CPU-heavy
-- MP4 export uses external ffmpeg
-- Preview is provided via examples
+*(**Note:** High-resolution software pixel conversions are CPU-intensive. It is recommended to run camera examples in `--release` mode for a smooth 30+ FPS experience).*
 
 ---
 
 ## License
 
-MIT
+This project is licensed under the [Apache License 2.0](LICENSE).
