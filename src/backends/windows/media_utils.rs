@@ -1,3 +1,5 @@
+#![allow(unsafe_op_in_unsafe_fn)]
+
 use crate::core::frame_format::FrameFormat;
 use crate::error::LumiavisError;
 use windows::Win32::Media::MediaFoundation::*;
