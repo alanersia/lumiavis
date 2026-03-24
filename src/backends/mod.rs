@@ -1,7 +1,7 @@
 pub(crate) mod traits;
 
 #[cfg(target_os = "linux")]
-pub(crate) mod v4l2;
+pub(crate) mod linux;
 
 #[cfg(target_os = "windows")]
-pub(crate) mod windows_mf;
+pub(crate) mod windows;

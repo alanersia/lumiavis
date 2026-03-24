@@ -6,6 +6,7 @@ use windows::Win32::{
 use crate::core::{
     camera_mode::CameraMode, camera_state::CameraState, capture::config::CameraConfig,
     frame::Frame, frame_format::FrameFormat,
+    image::format::{jpeg::is_valid_jpeg, yuv::{nv12_to_rgb24, yuy2_to_rgb24}},
 };
 use crate::error::LumiavisError;
 
@@ -63,7 +64,7 @@ impl CameraBackend for MediaFoundationCameraBackend {
                 .map_err(|e| LumiavisError::BackendError(format!("{:?}", e)))?;
 
             let (negotiated_format, actual_resolution, native_fmt) =
-                configure_format(&reader, config.fps)?;
+                configure_format(&reader, &config.resolution, config.fps)?;
             println!(
                 "Native: {:?} → Output: {:?}, resolution: {:?}",
                 native_fmt, negotiated_format, actual_resolution
@@ -184,6 +185,7 @@ unsafe fn get_camera_source(index: u32) -> Result<IMFMediaSource, LumiavisError>
 /// Returns (output FrameFormat, actual Resolution, native pixel format).
 unsafe fn configure_format(
     reader: &IMFSourceReader,
+    requested_res: &crate::core::resolution::Resolution,
     requested_fps: u32,
 ) -> Result<
     (
@@ -201,7 +203,7 @@ unsafe fn configure_format(
         height: u32,
         fps: u32,
         native_fmt: NativePixelFormat,
-        priority: u8, // lower = better
+        priority: u32, // lower = better
     }
 
     let mut best: Option<NativeCandidate> = None;
@@ -241,9 +243,27 @@ unsafe fn configure_format(
             continue; // skip other formats
         };
 
-        // Sub-priority based on FPS diff: closer to requested_fps = better priority
-        let fps_diff = (fps as i32 - requested_fps as i32).unsigned_abs() as u8;
-        let priority = priority_base + fps_diff;
+        // 1. Resolution match
+        // If requested 0x0, prioritize highest resolution (MAX pixels - actual pixels)
+        // If requested specific size, heavily penalize mismatches
+        let res_diff = if requested_res.width == 0 || requested_res.height == 0 {
+            // max realistic pixels ~ 33_177_600 (8K); we subtract actual so larger = smaller penalty
+            33_177_600u32.saturating_sub(width * height) / 10000 // scale down to fit in u32 priority
+        } else if width == requested_res.width && height == requested_res.height {
+            0
+        } else {
+            10000 // strong penalty for wrong size
+        };
+
+        // 2. FPS match
+        // If requested 0, prioritize highest FPS
+        let fps_diff = if requested_fps == 0 {
+            1000u32.saturating_sub(fps) // 1000fps - actual = penalty (higher fps = lower penalty)
+        } else {
+            (fps as i32 - requested_fps as i32).unsigned_abs() as u32
+        };
+
+        let priority = (priority_base as u32) + res_diff + fps_diff;
 
         let better = best
             .as_ref()
@@ -363,78 +383,4 @@ unsafe fn read_sample(reader: &IMFSourceReader) -> Result<Option<Vec<u8>>, Lumia
         .map_err(|e| LumiavisError::BackendError(format!("{:?}", e)))?;
 
     Ok(Some(data))
-}
-
-fn is_valid_jpeg(data: &[u8]) -> bool {
-    data.len() >= 4
-        && data[0] == 0xFF
-        && data[1] == 0xD8
-        && data[data.len() - 2] == 0xFF
-        && data[data.len() - 1] == 0xD9
-}
-
-/// Software YUY2 (YUYV 4:2:2 packed) → RGB24 conversion.
-fn yuy2_to_rgb24(src: &[u8], width: usize, height: usize) -> Vec<u8> {
-    let pixels = width * height;
-    let mut dst = vec![0u8; pixels * 3];
-    let src = &src[..pixels * 2]; // clamp to expected byte count
-
-    for (i, chunk) in src.chunks_exact(4).enumerate() {
-        let y0 = chunk[0] as f32;
-        let u  = chunk[1] as f32 - 128.0;
-        let y1 = chunk[2] as f32;
-        let v  = chunk[3] as f32 - 128.0;
-
-        let conv = |y: f32| -> (u8, u8, u8) {
-            let r = (y + 1.402 * v).clamp(0.0, 255.0) as u8;
-            let g = (y - 0.344_136 * u - 0.714_136 * v).clamp(0.0, 255.0) as u8;
-            let b = (y + 1.772 * u).clamp(0.0, 255.0) as u8;
-            (r, g, b)
-        };
-
-        let (r0, g0, b0) = conv(y0);
-        let (r1, g1, b1) = conv(y1);
-
-        let p = i * 2;
-        if p < pixels {
-            dst[p * 3]     = r0;
-            dst[p * 3 + 1] = g0;
-            dst[p * 3 + 2] = b0;
-        }
-        if p + 1 < pixels {
-            dst[(p + 1) * 3]     = r1;
-            dst[(p + 1) * 3 + 1] = g1;
-            dst[(p + 1) * 3 + 2] = b1;
-        }
-    }
-    dst
-}
-
-/// Software NV12 (semi-planar YUV420) → RGB24 conversion.
-fn nv12_to_rgb24(src: &[u8], width: usize, height: usize) -> Vec<u8> {
-    let y_size = width * height;
-    let mut dst = vec![0u8; y_size * 3];
-
-    let y_plane = &src[..y_size.min(src.len())];
-    let uv_plane = if src.len() > y_size { &src[y_size..] } else { &[] };
-
-    for row in 0..height {
-        for col in 0..width {
-            let y = y_plane.get(row * width + col).copied().unwrap_or(16) as f32;
-            let uv_row = row / 2;
-            let uv_col = (col / 2) * 2;
-            let u = uv_plane.get(uv_row * width + uv_col).copied().unwrap_or(128) as f32 - 128.0;
-            let v = uv_plane.get(uv_row * width + uv_col + 1).copied().unwrap_or(128) as f32 - 128.0;
-
-            let r = (y + 1.402 * v).clamp(0.0, 255.0) as u8;
-            let g = (y - 0.344_136 * u - 0.714_136 * v).clamp(0.0, 255.0) as u8;
-            let b = (y + 1.772 * u).clamp(0.0, 255.0) as u8;
-
-            let p = row * width + col;
-            dst[p * 3]     = r;
-            dst[p * 3 + 1] = g;
-            dst[p * 3 + 2] = b;
-        }
-    }
-    dst
 }

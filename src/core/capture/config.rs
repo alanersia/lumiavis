@@ -19,6 +19,16 @@ impl CameraConfig {
         }
     }
 
+    /// Automatically negotiates the highest available resolution and frame rate
+    pub fn best_quality(index: usize) -> Self {
+        Self {
+            index,
+            resolution: Resolution::new(0, 0),
+            fps: 0,
+            format: FrameFormat::Mjpeg, // Backend will try Mjpeg -> Rgb24 -> YUY2 based on priority
+        }
+    }
+
     pub fn with_resolution(mut self, resolution: Resolution) -> Self {
         self.resolution = resolution;
         self

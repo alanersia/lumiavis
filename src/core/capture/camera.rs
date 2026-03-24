@@ -5,10 +5,10 @@ use crate::core::{
 use crate::error::LumiavisError;
 
 #[cfg(target_os = "linux")]
-use crate::backends::v4l2::V4l2CameraBackend;
+use crate::backends::linux::V4l2CameraBackend;
 
 #[cfg(target_os = "windows")]
-use crate::backends::windows_mf::MediaFoundationCameraBackend;
+use crate::backends::windows::windows_mf::MediaFoundationCameraBackend;
 
 pub struct Camera {
     inner: CameraInner,
